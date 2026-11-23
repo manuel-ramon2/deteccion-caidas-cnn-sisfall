@@ -701,7 +701,7 @@ refs = [
     "A. Paszke *et al.*, \"PyTorch: An imperative style, high-performance deep learning library,\" en *Adv. "
     "Neural Inf. Process. Syst. (NeurIPS)*, vol. 32, 2019, pp. 8024–8035.",
     "[Autores], \"Detección de caídas: CNN de referencia vs. InceptionTime en SisFall,\" repositorio de código, "
-    "2026. [En línea]. Disponible: [enlace al repositorio en GitHub]",
+    "2026. [En línea]. Disponible: https://github.com/manuel-ramon2/deteccion-caidas-cnn-sisfall",
 ]
 for i, r in enumerate(refs, 1):
     p = par(sangria=False, tam=8)
