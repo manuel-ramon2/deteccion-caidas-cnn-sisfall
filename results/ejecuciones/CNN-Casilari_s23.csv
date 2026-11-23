@@ -1,0 +1,2 @@
+modelo,semilla,epoca_final,mejor_epoca,exactitud,f1_macro,f1_caida,sensibilidad,especificidad,precision,exactitud_balanceada,roc_auc,VP,FN,FP,VN,tiempo_entrenamiento_s,latencia_gpu_ms,latencia_cpu_ms,parametros,macs,tamano_mb,dispositivo,torch
+CNN-Casilari,23,20,20,0.989574,0.988991,0.986456,0.975446,0.998578,0.997717,0.987012,0.99825,437,11,1,702,12.53,0.8945,0.4948,56770,1491568,0.217,NVIDIA GeForce RTX 3050 6GB Laptop GPU,2.11.0+cu128

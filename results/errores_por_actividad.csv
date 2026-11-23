@@ -1,0 +1,35 @@
+actividad,CNN-Casilari,InceptionTime,descripcion
+D01,0.0,0.0,Caminar despacio
+D02,0.0,1.0,Caminar rápido
+D03,0.0,5.0,Trotar despacio
+D04,3.0,26.0,Trotar rápido
+D05,0.0,0.0,Escaleras despacio
+D06,2.07,14.14,Escaleras rápido
+D07,0.0,0.0,Sentarse silla media (lento)
+D08,0.0,0.0,Sentarse silla media (rápido)
+D09,0.0,1.2,Sentarse silla baja (lento)
+D10,0.0,2.2,Sentarse silla baja (rápido)
+D11,0.4,0.0,Colapsar en silla al levantarse
+D12,0.0,2.2,Acostarse despacio
+D13,2.0,4.33,Acostarse rápido
+D14,0.0,4.8,Girar acostado
+D15,0.0,1.0,Agacharse doblando rodillas
+D16,0.0,6.0,Agacharse sin doblar rodillas
+D17,0.0,0.0,Entrar y salir de un carro
+D18,0.0,0.0,Tropezar caminando
+D19,0.0,0.0,Saltar suave
+F01,0.0,0.0,"Adelante, resbalón caminando"
+F02,1.0,3.33,"Atrás, resbalón caminando"
+F03,0.0,0.0,"Lateral, resbalón caminando"
+F04,0.0,0.0,"Adelante, tropiezo caminando"
+F05,0.0,0.0,"Adelante, tropiezo trotando"
+F06,0.67,0.0,"Vertical, desmayo"
+F07,0.0,0.0,Desmayo apoyando manos
+F08,0.0,0.0,Adelante al levantarse
+F09,0.0,1.0,Lateral al levantarse
+F10,0.69,1.03,Adelante al sentarse
+F11,21.0,13.67,Atrás al sentarse
+F12,0.67,0.0,Lateral al sentarse
+F13,1.33,0.0,Adelante sentado (desmayo)
+F14,4.33,0.0,Atrás sentado (desmayo)
+F15,0.0,0.33,Lateral sentado (desmayo)

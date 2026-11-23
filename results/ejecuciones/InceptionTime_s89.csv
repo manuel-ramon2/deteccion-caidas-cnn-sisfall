@@ -1,0 +1,2 @@
+modelo,semilla,epoca_final,mejor_epoca,exactitud,f1_macro,f1_caida,sensibilidad,especificidad,precision,exactitud_balanceada,roc_auc,VP,FN,FP,VN,tiempo_entrenamiento_s,latencia_gpu_ms,latencia_cpu_ms,parametros,macs,tamano_mb,dispositivo,torch
+InceptionTime,89,10,7,0.989574,0.989071,0.986726,0.995536,0.985775,0.97807,0.990655,0.996345,446,2,10,693,79.36,5.0962,62.6971,471874,470037824,1.8,NVIDIA GeForce RTX 3050 6GB Laptop GPU,2.11.0+cu128

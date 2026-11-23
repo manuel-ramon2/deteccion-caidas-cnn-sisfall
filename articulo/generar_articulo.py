@@ -222,13 +222,12 @@ resumen = (
     f"{N_SEM} veces con semillas distintas y el mismo presupuesto (20 épocas, paciencia 3). En prueba, la CNN "
     f"de referencia logró una exactitud de {pct(A.exactitud)} % y un F1 macro de {pct(A.f1_macro)} %, cerca del "
     f"98,78 % publicado; InceptionTime logró {pct(B.exactitud)} % y {pct(B.f1_macro)} %. "
-    + (f"La prueba de Wilcoxon pareada mostró una diferencia significativa en F1 macro (p = {pval(p_w)}) a "
-       f"favor de {mejor('f1_macro')}. " if signif("f1_macro") else
-       f"La prueba de Wilcoxon pareada no mostró diferencia significativa en F1 macro (p = {pval(p_w)}). ")
-    + f"La CNN usa {A.parametros.iloc[0]} parámetros frente a {B.parametros.iloc[0]} de InceptionTime y su "
-    f"latencia en CPU fue {c(B.latencia_cpu_ms.mean() / A.latencia_cpu_ms.mean(), 1)} veces menor. Ambas "
-    "superan el 80 % de aceptación exigido; por su menor costo, la CNN de referencia es la opción recomendada "
-    "para un dispositivo portátil."
+    + f"La prueba de Wilcoxon pareada mostró que la CNN es mejor en F1 macro (p = {pval(p_w)}) y en "
+    f"especificidad, mientras que InceptionTime detecta más caídas (sensibilidad de {pct(B.sensibilidad)} % "
+    f"frente a {pct(A.sensibilidad)} %; p = {pval(pr['sensibilidad']['wilcoxon_p'])}) a costa de más falsas "
+    f"alarmas. La CNN usa {A.parametros.iloc[0]} parámetros frente a {B.parametros.iloc[0]} y su latencia en "
+    f"CPU fue {c(B.latencia_cpu_ms.mean() / A.latencia_cpu_ms.mean(), 1)} veces menor. Ambas superan el 80 % "
+    "de aceptación exigido; la CNN de referencia es la opción recomendada para un dispositivo portátil."
 )
 p = par(sangria=False, despues=4)
 _runs(p, "Resumen—", negrita=True, cursiva=True, tam=9)
@@ -437,16 +436,18 @@ fc = figura("fig_curvas_aprendizaje.png", f"Curvas de aprendizaje (media ± DE d
             "y exactitud en entrenamiento (línea continua) y validación (discontinua).")
 par(f"La Fig. {fc} muestra las curvas de aprendizaje. La CNN, con SGD y tasa de 1×10⁻⁴, converge despacio y "
     f"usó en promedio {c(A.epoca_final.mean(), 1)} épocas; InceptionTime, con Adam, converge en pocas épocas y "
-    f"se detuvo en promedio en la época {c(B.epoca_final.mean(), 1)}. La validación, de solo dos sujetos, "
-    f"es más ruidosa que el entrenamiento, lo que hace que la parada temprana dependa de pocas personas.")
+    f"se detuvo en promedio en la época {c(B.epoca_final.mean(), 1)} (entre {B.epoca_final.min()} y "
+    f"{B.epoca_final.max()}). La pérdida de validación de la CNN baja de forma suave y nunca activó la parada "
+    f"temprana; la de InceptionTime oscila mucho entre épocas, porque la validación tiene solo dos sujetos y "
+    f"Adam da pasos grandes, de modo que la parada temprana se activó con frecuencia tras un repunte aislado.")
 fm = figura("fig_matrices_confusion.png", "Matrices de confusión en prueba, promedio de las ejecuciones "
             "(número medio de trazas y porcentaje por fila).")
 fd = figura("fig_distribucion_metricas.png", f"Distribución de las métricas de prueba en las {N_SEM} "
             "semillas de cada modelo.")
-par(f"Las matrices de confusión promedio (Fig. {fm}) muestran que el error de ambas redes se concentra en "
-    f"caídas no detectadas: la CNN deja pasar en promedio {c(A.FN.mean(), 1)} de 448 caídas y genera "
-    f"{c(A.FP.mean(), 1)} falsas alarmas sobre 703 ADL; InceptionTime, {c(B.FN.mean(), 1)} y "
-    f"{c(B.FP.mean(), 1)}. La Fig. {fd} muestra la dispersión entre semillas: la DE de la exactitud fue "
+par(f"Las matrices de confusión promedio (Fig. {fm}) muestran que las dos redes fallan de forma opuesta: la "
+    f"CNN deja pasar en promedio {c(A.FN.mean(), 1)} de 448 caídas y genera solo {c(A.FP.mean(), 1)} falsas "
+    f"alarmas sobre 703 ADL, mientras que InceptionTime deja pasar {c(B.FN.mean(), 1)} caídas pero genera "
+    f"{c(B.FP.mean(), 1)} falsas alarmas. La Fig. {fd} muestra la dispersión entre semillas: la DE de la exactitud fue "
     f"{c(100 * A.exactitud.std(), 2)} puntos para la CNN y {c(100 * B.exactitud.std(), 2)} para InceptionTime.")
 fl = figura("fig_desempeno_vs_latencia.png", "F1 macro frente a la latencia de inferencia con lote 1 en GPU "
             "(izquierda) y en CPU con un hilo (derecha). Los rombos son la media ± DE de cada modelo.")
@@ -509,21 +510,28 @@ par("La comparación con SIAD también es ilustrativa: con datos de tabla, el mo
     "No es que una técnica sea mejor que la otra: son problemas distintos. Predecir si alguien caerá en un "
     "año depende de muchos factores que no están en los datos; reconocer una caída que acaba de ocurrir es "
     "un problema mucho más acotado, con una firma física clara. Por eso ambos módulos se complementan.")
-par("Entre los dos modelos, " + (
-    f"la diferencia en F1 macro fue estadísticamente significativa a favor de {mejor('f1_macro')}, pero su "
-    f"tamaño ({c(100 * abs(pr['f1_macro']['dif_media']), 2)} puntos) es pequeño frente al costo adicional. "
-    if signif("f1_macro") else
-    f"la diferencia en F1 macro ({c(100 * abs(pr['f1_macro']['dif_media']), 2)} puntos) no fue estadísticamente "
-    f"significativa, por lo que no puede afirmarse que una red supere a la otra en desempeño. ") +
-    "Con ventanas centradas en el pico, la señal de una caída es muy distintiva (impacto fuerte y cambio de "
-    "orientación) y una CNN pequeña ya captura casi toda la información; la capacidad adicional de "
-    "InceptionTime, con filtros largos y muchos más parámetros, no se traduce en una mejora proporcional.")
+par(f"Entre los dos modelos, la CNN de referencia fue significativamente mejor en F1 macro, por "
+    f"{c(100 * abs(pr['f1_macro']['dif_media']), 2)} puntos (d de Cohen pareada de "
+    f"{c(abs(pr['f1_macro']['d_cohen_pareada']), 2)}, un efecto grande), y además es mucho más barata. La "
+    f"ventaja no es uniforme: InceptionTime detectó más caídas, con una sensibilidad "
+    f"{c(100 * pr['sensibilidad']['dif_media'], 2)} puntos mayor, pero su especificidad fue "
+    f"{c(100 * abs(pr['especificidad']['dif_media']), 2)} puntos menor y su precisión, "
+    f"{c(100 * abs(pr['precision']['dif_media']), 2)} puntos menor. Su variabilidad entre semillas también fue "
+    f"unas {c(B.f1_macro.std() / A.f1_macro.std(), 0)} veces mayor: con la paciencia de 3 épocas y una "
+    f"validación de dos sujetos, varias ejecuciones se detuvieron en la época 6 o 7, antes de estabilizarse; la "
+    f"semilla 11, detenida en la época 7, fue la peor ({c(100 * B[B.semilla == 11].exactitud.iloc[0], 2)} %). "
+    f"Esto indica que parte de la diferencia viene del protocolo, que es el de [3] y favorece a una red que "
+    f"converge de forma suave, más que de la arquitectura. Con ventanas centradas en el pico, la señal de una "
+    f"caída es muy distintiva (impacto fuerte y cambio de orientación) y una CNN pequeña ya captura casi toda "
+    f"la información; la capacidad adicional de InceptionTime no se traduce en una mejora.")
 subseccion("Ventajas y desventajas")
 par(f"La CNN de referencia es diminuta ({c(A.tamano_mb.iloc[0], 2)} MB), rápida en CPU y fácil de llevar a un "
     f"microcontrolador o a un teléfono, lo que importa en un sistema portátil con batería limitada. Su "
     f"desventaja es que depende de una tasa de aprendizaje muy baja y de muchas épocas para converger. "
-    f"InceptionTime converge en menos épocas y es una arquitectura general que no requiere ajustar el "
-    f"diseño a cada problema, pero su costo de inferencia en CPU es "
+    f"InceptionTime converge en menos épocas, deja escapar menos caídas y es una arquitectura general que no "
+    f"requiere ajustar el diseño a cada problema; en un sistema de alarma, perder menos caídas puede pesar más "
+    f"que unas falsas alarmas adicionales. Sus desventajas son la inestabilidad entre semillas, la menor "
+    f"especificidad y el costo: su inferencia en CPU es "
     f"{c(B.latencia_cpu_ms.mean() / A.latencia_cpu_ms.mean(), 1)} veces mayor y su entrenamiento, mucho más "
     f"lento.")
 subseccion("Análisis de errores")
@@ -544,17 +552,24 @@ egr_cnn = egr.set_index(["grupo", "y"])
 par(f"La Fig. {fe} muestra dónde fallan las redes. En la CNN, las caídas que más se escapan son: "
     f"{lista(top_fn, M1)}. Las ADL que más falsas alarmas producen son: {lista(top_fp, M1)}. En "
     f"InceptionTime, las caídas más difíciles son {lista(top_fn2, M2)}, y las ADL más confundidas, "
-    f"{lista(top_fp2, M2)}. El patrón es coherente: las caídas que empiezan sentado o con apoyo de las manos "
-    f"producen impactos suaves, parecidos a sentarse o acostarse con fuerza, mientras que las ADL bruscas "
-    f"(desplomarse en la silla, tropezar sin caer, saltar) producen picos parecidos a los de una caída.")
+    f"{lista(top_fp2, M2)}. Hay dos patrones. Las caídas que se escapan son sobre todo las que ocurren al "
+    f"sentarse o estando sentado (F11, F13, F14): el cuerpo cae desde poca altura, el impacto es corto y la "
+    f"postura final (sentado o recostado) se parece a la de una ADL. Las falsas alarmas vienen de ADL con "
+    f"impactos fuertes y repetidos, como trotar rápido o bajar escaleras rápido, o con un cambio brusco de "
+    f"orientación, como acostarse rápido. InceptionTime, con filtros de hasta 39 muestras, parece más sensible "
+    f"a esos impactos periódicos: en trotar rápido se equivocó en el {c(eact.loc['D04', M2], 1)} % de las "
+    f"trazas, frente al {c(eact.loc['D04', M1], 1)} % de la CNN. Ninguna red confundió D11 (desplomarse en una "
+    f"silla) o D18 (tropezar sin caer) con frecuencia, pese a que se diseñaron para parecerse a una caída.")
 try:
     se_adl = egr_cnn.loc[("SE (mayores)", 0)]
     sa_adl = egr_cnn.loc[("SA (jóvenes)", 0)]
     par(f"Por grupo de edad, la tasa de falsas alarmas de la CNN fue {c(se_adl[M1], 2)} % en las ADL de los "
         f"mayores y {c(sa_adl[M1], 2)} % en las de los jóvenes (InceptionTime: {c(se_adl[M2], 2)} % y "
-        f"{c(sa_adl[M2], 2)} %). Este punto es importante para SIAD, cuyos pacientes son adultos mayores: "
-        f"sus movimientos más lentos cambian el patrón de aceleración, y casi todas las caídas de "
-        f"entrenamiento son de personas jóvenes.")
+        f"{c(sa_adl[M2], 2)} %; Tabla {ROMANOS[_n_tab[0]]}). Este punto es importante para SIAD, cuyos "
+        f"pacientes son adultos mayores: la CNN no dio ninguna falsa alarma con los cuatro mayores de prueba, "
+        f"mientras que InceptionTime se equivocó sobre todo con dos de ellos. En cambio, no se puede medir qué "
+        f"tan bien detectan las caídas de personas mayores, porque en la prueba no hay ninguna: SE06, el único "
+        f"mayor que simuló caídas, quedó en entrenamiento.")
 except KeyError:
     pass
 filas_g = []
@@ -564,17 +579,28 @@ tabla("Tasa de error (%) por grupo de edad y clase real, promedio de las semilla
       ["Grupo", "Clase real (error)", M1, M2], filas_g, [0.95, 0.9, 0.8, 0.8], tam=7)
 fs = figura("fig_errores_por_sujeto.png", "Tasa de error por sujeto de prueba (promedio de las semillas). "
             "Los sujetos SE solo aportan ADL, de modo que su error corresponde a falsas alarmas.")
-par(f"La Fig. {fs} muestra que los errores no se reparten de forma uniforme: unos pocos sujetos concentran "
-    f"buena parte de ellos. Con solo 10 personas en prueba, el resultado depende de quiénes quedaron en esa "
+esuj = pd.read_csv(RES / "errores_por_sujeto.csv", index_col=0)
+s1, s2 = esuj[M1].idxmax(), esuj[M2].nlargest(2).index.tolist()
+par(f"La Fig. {fs} muestra que los errores no se reparten de forma uniforme. En la CNN, el sujeto {s1} "
+    f"concentra la mayor tasa de error ({c(esuj.loc[s1, M1], 2)} %), casi toda en caídas no detectadas; en "
+    f"InceptionTime, los mayores {s2[0]} y {s2[1]} ({c(esuj.loc[s2[0], M2], 2)} % y "
+    f"{c(esuj.loc[s2[1], M2], 2)} %), todas falsas alarmas. Con solo 10 personas en prueba, el resultado depende "
+    f"de quiénes quedaron en esa "
     f"partición; por eso la DE entre semillas mide la variabilidad del entrenamiento, pero no la que habría "
     f"con otra muestra de personas.")
 fg = figura("fig_gradcam_cnn.png", "Mapas Grad-CAM de la CNN de referencia (semilla de F1 mediano) sobre "
             "cuatro trazas de prueba: acierto en caída, acierto en ADL, caída no detectada y falsa alarma. "
-            "Los colores cálidos marcan las zonas que más pesan en la decisión de \"caída\".")
-par(f"Los mapas Grad-CAM (Fig. {fg}) muestran que la CNN se fija sobre todo en el intervalo alrededor del "
-    f"pico de impacto y en el cambio de nivel posterior de las componentes, es decir, en el golpe y en el "
-    f"cambio de orientación del cuerpo, que son los rasgos físicos de una caída. En los errores, la atención "
-    f"se dispersa o se concentra en un pico que no va seguido de un cambio claro de postura.")
+            "Cada mapa corresponde a la clase predicha; los colores cálidos marcan las zonas que más pesan en esa "
+            "decisión.")
+par(f"Los mapas Grad-CAM (Fig. {fg}) se calcularon para la clase que predijo la red. En la caída detectada, "
+    f"la atención se concentra en el intervalo de unos −0,5 s a +0,3 s alrededor del pico: la fase de caída, el "
+    f"impacto y el rebote, que son los rasgos físicos de una caída. Cuando la red predice ADL, en cambio, mira "
+    f"los tramos quietos lejos del pico, donde no hay nada parecido a una caída. La caída no detectada (F11, "
+    f"caída hacia atrás al sentarse) es ilustrativa: el impacto es un pico aislado en un solo eje, sin la "
+    f"secuencia caótica de una caída desde de pie, y la red basó su decisión en el tramo sentado anterior al "
+    f"pico. En la falsa alarma (acostarse rápido, P(caída) = 0,568) el mapa queda plano: la decisión quedó en "
+    f"el límite y no hay una región con evidencia clara a favor de la caída. Ajustar el umbral, o pedir varias "
+    f"ventanas seguidas por encima de él, reduciría este tipo de alarmas.")
 subseccion("Implicaciones para SIAD")
 par(f"En SIAD, el modelo de riesgo a 12 meses se calcula cuando el profesional registra una valoración; el "
     f"detector propuesto funcionaría de forma continua en un cinturón o teléfono del paciente. Con "
@@ -592,24 +618,26 @@ par("Las caídas de SisFall son simuladas por voluntarios sobre colchonetas, y c
     "conjunto de datos, y [3] mostró que el desempeño cae al cambiar de conjunto. La validación del 5 % tiene "
     "solo dos sujetos, lo que hace frágil la parada temprana. La ventana se centra en el pico de toda la traza, "
     "lo que en un sistema real exige un detector de picos en línea. La comparación con YOLO no fue posible por "
-    "el tipo de datos, y se reemplazó por InceptionTime. Por último, durante el entrenamiento la GPU estuvo "
-    "compartida con otra aplicación gráfica, lo que infló y volvió más variables los tiempos de entrenamiento y "
-    "la latencia en GPU; la latencia en CPU con un hilo es la medida de costo más confiable.")
+    "el tipo de datos, y se reemplazó por InceptionTime. El presupuesto de 20 épocas con paciencia 3, tomado de "
+    "[3], pudo cortar antes de tiempo algunas ejecuciones de InceptionTime; un presupuesto mayor e igual para "
+    "ambas es una extensión natural. Por último, durante las primeras ejecuciones la GPU estuvo compartida con "
+    "otra aplicación gráfica, lo que infló y volvió más variables los tiempos de entrenamiento y la latencia en "
+    "GPU (la primera ejecución de InceptionTime tardó 1795 s y las demás entre 48 y 542 s); la latencia en CPU "
+    "con un hilo es la medida de costo más confiable.")
 
 # ---------------------------------------------------------------- VI. Conclusiones
 seccion("Conclusiones")
 par(f"Se reprodujo la CNN 1D de Casilari *et al.* [3] y se comparó con InceptionTime [5] en la detección de "
     f"caídas con acelerometría de SisFall, con una partición por sujeto y {N_SEM} semillas por modelo. Ambas "
     f"redes superan con amplitud el 80 % de aceptación: la CNN logró una exactitud de {pct(A.exactitud)} % y "
-    f"un F1 macro de {pct(A.f1_macro)} %, cerca de lo publicado. " +
-    (f"InceptionTime mostró una diferencia significativa en F1 macro, pero pequeña frente a su costo. "
-     if signif("f1_macro") and mejor("f1_macro") == M2 else
-     "La arquitectura moderna no mejoró de forma significativa a la red de referencia. " if not signif("f1_macro")
-     else "La red de referencia fue significativamente mejor en F1 macro. ") +
-    f"Se recomienda la CNN de referencia para un dispositivo portátil o un teléfono, por ser "
-    f"{c(B.parametros.iloc[0] / A.parametros.iloc[0], 0)} veces más pequeña y más rápida en CPU; InceptionTime "
-    f"tiene sentido cuando la inferencia se hace en un servidor y se quiere una arquitectura general para "
-    f"varias señales. Como trabajo futuro se propone validar con caídas reales de adultos mayores (por ejemplo, "
+    f"un F1 macro de {pct(A.f1_macro)} %, cerca de lo publicado, e InceptionTime, {pct(B.exactitud)} % y "
+    f"{pct(B.f1_macro)} %. Respondiendo al objetivo, la arquitectura moderna no mejoró a la red de referencia: la "
+    f"CNN fue significativamente mejor en F1 macro, especificidad y precisión, y mucho más estable entre "
+    f"semillas; InceptionTime solo la superó en sensibilidad. Se recomienda la CNN de referencia para un "
+    f"dispositivo portátil o un teléfono, por ser {c(B.parametros.iloc[0] / A.parametros.iloc[0], 0)} veces más "
+    f"pequeña y unas {c(B.latencia_cpu_ms.mean() / A.latencia_cpu_ms.mean(), 0)} veces más rápida en CPU. "
+    f"InceptionTime tiene sentido si la inferencia se hace en un servidor y se prioriza no perder ninguna caída "
+    f"aunque aumenten las falsas alarmas. Como trabajo futuro se propone validar con caídas reales de adultos mayores (por ejemplo, "
     f"FARSEEING), evaluar en otros conjuntos, detectar en línea con ventanas deslizantes e integrar la "
     f"detección en SIAD junto al modelo de riesgo a 12 meses, de modo que una caída detectada actualice el "
     f"historial que usa ese modelo.")

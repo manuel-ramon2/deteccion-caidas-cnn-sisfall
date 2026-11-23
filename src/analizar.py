@@ -115,6 +115,7 @@ def fig_curvas(t):
             ax[j].set_ylabel(nom)
             ax[j].grid(alpha=.3)
     ax[1].legend(fontsize=6.5, loc="lower right")
+    fig.subplots_adjust(wspace=.32)
     fig.savefig(FIG / "fig_curvas_aprendizaje.png")
     plt.close(fig)
 
@@ -197,7 +198,8 @@ def errores(t, meta):
     x = np.arange(len(top))
     for k, m in enumerate(MODELOS):
         ax.bar(x + (k - .5) * .38, por_act.loc[top, m], .38, color=COLOR[m], label=m)
-    ax.set_xticks(x, [f"{a}\n{ACTIVIDADES[a][:22]}" for a in top], fontsize=6, rotation=0)
+    ax.set_xticks(x, list(top), fontsize=8)
+    ax.set_xlabel("Actividad (D: ADL; F: caída; ver Tabla de actividades)")
     ax.set_ylabel("Tasa de error (%)")
     ax.legend(fontsize=7)
     ax.grid(axis="y", alpha=.3)
@@ -261,7 +263,8 @@ def gradcam(t, meta, P):
         x = torch.from_numpy(X[i:i + 1]).requires_grad_(True)
         out = red(x)
         red.zero_grad()
-        out[0, 1].backward()
+        clase = int(out[0].argmax())  # Grad-CAM de la clase predicha
+        out[0, clase].backward()
         w = grad["g"].mean(-1, keepdim=True)
         cam = torch.relu((w * act["a"]).sum(1))[0].detach().numpy()
         cam = np.interp(np.linspace(0, len(cam) - 1, 1001), np.arange(len(cam)), cam)
@@ -273,7 +276,8 @@ def gradcam(t, meta, P):
         ax.set_ylim(-4, 4)
         ax.set_ylabel("g")
         ax.set_title(f"{nombre}: {fila.archivo[:-4]} ({ACTIVIDADES[fila.actividad]}), "
-                     f"P(caída)={fila.prob_caida:.3f}", fontsize=7.5)
+                     f"P(caída)={fila.prob_caida:.3f}; mapa de la clase «{'caída' if clase else 'ADL'}»",
+                     fontsize=7)
     axs[0].legend(fontsize=6, loc="upper right", ncol=3)
     axs[-1].set_xlabel("Tiempo relativo al pico de aceleración (s)")
     fig.savefig(FIG / "fig_gradcam_cnn.png")
