@@ -1,0 +1,4 @@
+particion,trazas,sujetos,caidas,actividades,porc_trazas,porc_sujetos
+entrenamiento,3141,26,1275,1866,69.7,68.4
+prueba,1151,10,448,703,25.5,26.3
+validacion,213,2,75,138,4.7,5.3

@@ -1,0 +1,20 @@
+# Entorno
+.venv/
+__pycache__/
+*.pyc
+
+# Dataset original (947 MB): se descarga con el comando del README
+data/raw/
+
+# Ventanas procesadas (54 MB): se regeneran con data/preparar_datos.py
+data/procesado/X.npy
+
+# Caché de Windows creado en las ejecuciones sin la variable SystemDrive
+src/%SystemDrive%/
+
+# Prueba rápida previa a las ejecuciones oficiales
+results/prueba_rapida/
+
+# Archivos temporales de Word y PDF de revisión
+articulo/~$*
+articulo/*.pdf

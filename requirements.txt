@@ -1,0 +1,10 @@
+# PyTorch con CUDA 12.8 (en CPU basta con: pip install torch)
+--extra-index-url https://download.pytorch.org/whl/cu128
+torch==2.11.0
+numpy
+pandas
+scipy
+scikit-learn
+statsmodels
+matplotlib
+openpyxl

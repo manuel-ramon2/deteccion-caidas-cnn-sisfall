@@ -1,0 +1,60 @@
+{
+  "trazas": 4505,
+  "sujetos": 38,
+  "caidas": 1798,
+  "actividades": 2707,
+  "forma_X": [
+    4505,
+    3,
+    1001
+  ],
+  "duplicados_exactos": 1,
+  "duplicados_entre_particiones": 0,
+  "semilla_particion": 2026,
+  "sujetos_por_particion": {
+    "entrenamiento": [
+      "SA02",
+      "SA03",
+      "SA05",
+      "SA06",
+      "SA07",
+      "SA08",
+      "SA09",
+      "SA10",
+      "SA11",
+      "SA12",
+      "SA13",
+      "SA16",
+      "SA17",
+      "SA18",
+      "SA21",
+      "SA23",
+      "SE01",
+      "SE02",
+      "SE03",
+      "SE05",
+      "SE06",
+      "SE07",
+      "SE08",
+      "SE12",
+      "SE14",
+      "SE15"
+    ],
+    "prueba": [
+      "SA01",
+      "SA04",
+      "SA15",
+      "SA19",
+      "SA20",
+      "SA22",
+      "SE09",
+      "SE10",
+      "SE11",
+      "SE13"
+    ],
+    "validacion": [
+      "SA14",
+      "SE04"
+    ]
+  }
+}
