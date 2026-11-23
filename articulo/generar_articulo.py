@@ -35,6 +35,11 @@ info = json.loads((RAIZ / "data" / "procesado" / "info.json").read_text(encoding
 part = pd.read_csv(RAIZ / "data" / "procesado" / "resumen_particion.csv", index_col=0)
 eact = pd.read_csv(RES / "errores_por_actividad.csv", index_col=0)
 egr = pd.read_csv(RES / "errores_por_grupo.csv")
+ver = json.loads((RES / "verificacion.json").read_text(encoding="utf-8"))
+perm = pd.DataFrame(ver["etiquetas_permutadas"])
+cvp = pd.DataFrame(ver["cv_5_pliegues_por_sujeto"])
+umb = ver["umbral_smv"]
+cvr = ver["cv_resumen"]
 N_SEM = t.semilla.nunique()
 A, B = t[t.modelo == M1], t[t.modelo == M2]
 
@@ -212,16 +217,17 @@ columnas(nuevo, 2)
 # ---------------------------------------------------------------- resumen
 p_w = pr["f1_macro"]["wilcoxon_p"]
 resumen = (
-    "Las caídas son una causa principal de lesión y muerte en adultos mayores, y en atención domiciliaria "
-    "pueden pasar horas sin que nadie lo note. Este trabajo compara, con los mismos datos y el mismo "
-    "protocolo, la red neuronal convolucional (CNN) 1D publicada por Casilari *et al.* para detectar caídas "
+    "Las caídas son una causa principal de lesión y muerte en adultos mayores. Este trabajo compara, con "
+    "el mismo protocolo, la red neuronal convolucional (CNN) 1D publicada por Casilari *et al.* para detectar caídas "
     "con un acelerómetro de cintura y la arquitectura moderna InceptionTime. Se usaron las "
     f"{info['trazas']} trazas de SisFall ({info['caidas']} caídas y {info['actividades']} actividades diarias "
     f"de {info['sujetos']} personas de 19 a 75 años), recortadas a ±2,5 s alrededor del pico de aceleración "
     "y divididas 70/25/5 por sujeto, sin fugas entre particiones. Cada red se entrenó desde cero "
     f"{N_SEM} veces con semillas distintas y el mismo presupuesto (20 épocas, paciencia 3). En prueba, la CNN "
     f"de referencia logró una exactitud de {pct(A.exactitud)} % y un F1 macro de {pct(A.f1_macro)} %, cerca del "
-    f"98,78 % publicado; InceptionTime logró {pct(B.exactitud)} % y {pct(B.f1_macro)} %. "
+    f"98,78 % publicado, y {c(100 * cvr['exactitud'][0], 2)} % en validación cruzada por sujeto; InceptionTime "
+    f"logró {pct(B.exactitud)} % y {pct(B.f1_macro)} %. Con etiquetas permutadas la CNN cae al nivel de azar, "
+    f"lo que descarta fugas. "
     + f"La prueba de Wilcoxon pareada mostró que la CNN es mejor en F1 macro (p = {pval(p_w)}) y en "
     f"especificidad, mientras que InceptionTime detecta más caídas (sensibilidad de {pct(B.sensibilidad)} % "
     f"frente a {pct(A.sensibilidad)} %; p = {pval(pr['sensibilidad']['wilcoxon_p'])}) a costa de más falsas "
@@ -400,6 +406,14 @@ par("Para comparar se aplicó la prueba de rangos con signo de Wilcoxon, pareada
     "métrica, como recomienda Demšar [17] cuando no se puede suponer normalidad; como complemento se reportan "
     "la prueba t pareada y la d de Cohen. Además, para cada semilla se aplicó la prueba exacta de McNemar "
     "[18], [19] a los aciertos y errores de ambas redes sobre las mismas trazas de prueba. Se usó α = 0,05.")
+par("Como un desempeño cercano al 99 % puede esconder una fuga de información, se hicieron tres pruebas de "
+    "verificación con la CNN de referencia y el mismo protocolo: (i) entrenarla con las etiquetas de "
+    "entrenamiento y validación permutadas al azar, evaluando con las etiquetas reales (sin fuga, el resultado "
+    "debe caer al nivel de la clase mayoritaria); (ii) una línea base sin red, que clasifica como caída toda "
+    "traza cuyo pico de aceleración supera un umbral elegido en entrenamiento, para medir la dificultad "
+    "intrínseca de la tarea; y (iii) una validación cruzada de 5 pliegues agrupada por sujeto y estratificada "
+    "por edad y clase sobre los 38 sujetos, con dos sujetos de validación por pliegue, para comprobar que el "
+    "resultado no depende de la partición elegida.")
 subseccion("Análisis de errores e implementación")
 par("Los errores se agruparon por tipo de actividad y por grupo de edad, promediando las ejecuciones. Para la "
     "CNN se calcularon mapas Grad-CAM [20] en la última capa convolucional, interpolados a la longitud de la "
@@ -482,6 +496,33 @@ filas_mc = [[int(r.semilla), int(r.ambos_aciertan), int(r.solo_cnn_acierta), int
 tabla("Prueba exacta de McNemar por semilla sobre las 1151 trazas de prueba",
       ["Semilla", "Ambos aciertan", "Solo CNN", "Solo Incep.", "Ambos fallan", "p"], filas_mc,
       [0.5, 0.65, 0.55, 0.6, 0.6, 0.5])
+subseccion("Pruebas de verificación")
+cvr = ver["cv_resumen"]
+filas_v = [["Etiquetas permutadas (3 semillas)", f"{c(100 * perm.exactitud.mean(), 2)} ± "
+            f"{c(100 * perm.exactitud.std(), 2)}", f"{c(100 * perm.f1_macro.mean(), 2)} ± "
+            f"{c(100 * perm.f1_macro.std(), 2)}"],
+           ["Clase mayoritaria (siempre ADL)", c(100 * ver["clase_mayoritaria_prueba"], 2), "—"],
+           [f"Umbral de pico ≥ {c(umb['umbral_g'], 2)} g (sin red)", c(100 * umb["exactitud"], 2),
+            c(100 * umb["f1_macro"], 2)],
+           ["CNN, partición principal (10 semillas)", pct(A.exactitud), pct(A.f1_macro)],
+           ["CNN, VC 5 pliegues por sujeto", f"{c(100 * cvr['exactitud'][0], 2)} ± {c(100 * cvr['exactitud'][1], 2)}",
+            f"{c(100 * cvr['f1_macro'][0], 2)} ± {c(100 * cvr['f1_macro'][1], 2)}"]]
+tv = tabla("Pruebas de verificación sobre la prueba (exactitud y F1 macro, %)",
+           ["Prueba", "Exactitud (%)", "F1 macro (%)"], filas_v, [1.55, 0.95, 0.95], tam=7)
+par(f"La Tabla {ROMANOS[tv - 1]} resume las pruebas de verificación. Con las etiquetas permutadas, la CNN "
+    f"obtuvo {c(100 * perm.exactitud.mean(), 2)} % de exactitud, prácticamente igual al "
+    f"{c(100 * ver['clase_mayoritaria_prueba'], 2)} % de predecir siempre ADL, y un F1 macro de "
+    f"{c(100 * perm.f1_macro.mean(), 2)} %: la red no encuentra en los datos ninguna pista de la clase distinta "
+    f"de la señal, lo que descarta una fuga en el código o en la partición. La línea base sin red, que solo "
+    f"mira si el pico supera {c(umb['umbral_g'], 2)} g, ya alcanza {c(100 * umb['exactitud'], 2)} % de exactitud "
+    f"(sensibilidad {c(100 * umb['sensibilidad'], 2)} %, especificidad {c(100 * umb['especificidad'], 2)} %): "
+    f"la tarea es fácil en buena parte, y la CNN aporta unos "
+    f"{c(100 * (A.exactitud.mean() - umb['exactitud']), 0)} puntos sobre ella. En la validación cruzada de 5 "
+    f"pliegues por sujeto, la CNN obtuvo {c(100 * cvr['exactitud'][0], 2)} ± {c(100 * cvr['exactitud'][1], 2)} % "
+    f"de exactitud (entre {c(100 * cvp.exactitud.min(), 2)} % y {c(100 * cvp.exactitud.max(), 2)} % según el "
+    f"pliegue). La partición principal resultó algo favorable, y una estimación más prudente del desempeño en "
+    f"personas nuevas de SisFall es cercana al {c(100 * cvr['exactitud'][0], 1)} %, que sigue muy por encima del "
+    f"80 % exigido.")
 
 # ---------------------------------------------------------------- V. Discusión
 seccion("Discusión")
@@ -491,9 +532,13 @@ par(f"La reproducción de la CNN de referencia quedó cerca del valor publicado 
     f"que en [3] se dividieron las trazas al azar: allí las repeticiones de un mismo voluntario pueden caer en "
     f"entrenamiento y prueba, lo que favorece resultados optimistas. Segundo, se usó PyTorch en lugar de MATLAB "
     f"y se fijaron supuestos no publicados (paso del *pooling* y *dropout*). Tercero, la prueba aquí tiene "
-    f"10 sujetos, de modo que el resultado depende de qué personas quedaron en ella. Que la exactitud se "
-    f"mantenga sobre el 98 % con sujetos nuevos indica que la red generaliza a personas no vistas dentro de "
-    f"SisFall. Los valores son del mismo orden que los de DSCS [11] (99,32 %) y la CNN-LSTM de [12] (98,9 %), "
+    f"10 sujetos, de modo que el resultado depende de qué personas quedaron en ella; la validación cruzada lo "
+    f"confirma, con {c(100 * cvr['exactitud'][0], 2)} % en promedio frente al {c(100 * A.exactitud.mean(), 2)} % "
+    f"de la partición principal. Que la exactitud se mantenga sobre el 97 % en los cinco pliegues indica que la "
+    f"red generaliza a personas no vistas dentro de SisFall. Ese valor tan alto no significa que la detección "
+    f"de caídas esté resuelta: refleja que las caídas de SisFall son simuladas, que cada traza contiene un solo "
+    f"movimiento y que la ventana se centra en el pico, lo que ya separa el {c(100 * umb['exactitud'], 0)} % de "
+    f"los casos con un simple umbral. Los valores son del mismo orden que los de DSCS [11] (99,32 %) y la CNN-LSTM de [12] (98,9 %), "
     f"aunque esas cifras usan otras ventanas, sensores y divisiones (Tabla {ROMANOS[_n_tab[0]]}).")
 tabla("Comparación con resultados publicados en SisFall",
       ["Trabajo", "Entrada / división", "Exactitud (%)", "Sens. (%)", "Espec. (%)"],

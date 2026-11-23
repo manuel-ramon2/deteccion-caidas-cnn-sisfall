@@ -51,7 +51,33 @@ python src/ejecutar_todo.py
 
 # 4. Estadística, figuras, análisis de errores y Grad-CAM
 python src/analizar.py
+
+# 5. Pruebas de verificación (etiquetas permutadas, umbral sin red, VC 5 pliegues por sujeto)
+python src/verificar_resultados.py
+
+# 6. Artículo IEEE (Word) a partir de los resultados
+python articulo/generar_articulo.py
 ```
+
+## Resultados principales
+
+| | CNN de referencia | InceptionTime |
+|---|---|---|
+| Exactitud (prueba, 10 semillas) | 99,08 ± 0,14 % | 97,99 ± 1,12 % |
+| F1 macro | 99,03 ± 0,15 % | 97,90 ± 1,16 % |
+| Sensibilidad / especificidad | 98,01 % / 99,76 % | 98,71 % / 97,54 % |
+| Latencia CPU (1 hilo, lote 1) | 0,59 ms | 50,3 ms |
+| Parámetros | 56 770 | 471 874 |
+
+Wilcoxon pareado en F1 macro: p = 0,004 a favor de la CNN; InceptionTime tiene mayor
+sensibilidad (p = 0,008).
+
+Verificación (`results/verificacion.json`): con etiquetas permutadas la CNN obtiene
+61,7 % (nivel de la clase mayoritaria, 61,1 %), lo que descarta fugas; un umbral sobre el
+pico de aceleración, sin red, obtiene 84,2 %; en validación cruzada de 5 pliegues por
+sujeto la CNN obtiene 98,46 ± 0,53 %. El desempeño tan alto refleja que las caídas de
+SisFall son simuladas y que la ventana se centra en el pico; no debe esperarse lo mismo
+con caídas reales.
 
 `ejecutar_todo.py` salta las ejecuciones que ya tienen su CSV; para repetir desde
 cero, borre `results/ejecuciones/`.

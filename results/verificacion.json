@@ -1,0 +1,92 @@
+{
+  "etiquetas_permutadas": [
+    {
+      "semilla": 11,
+      "exactitud": 0.6116420503909644,
+      "f1_macro": 0.38574636728641576
+    },
+    {
+      "semilla": 23,
+      "exactitud": 0.6177237185056472,
+      "f1_macro": 0.4136797258497731
+    },
+    {
+      "semilla": 42,
+      "exactitud": 0.6211989574283232,
+      "f1_macro": 0.4115652320738434
+    }
+  ],
+  "clase_mayoritaria_prueba": 0.6107732406602954,
+  "umbral_smv": {
+    "umbral_g": 3.7969353199005127,
+    "exactitud": 0.841876629018245,
+    "f1_macro": 0.8364852628949669,
+    "sensibilidad": 0.8482142857142857,
+    "especificidad": 0.8378378378378378
+  },
+  "cv_5_pliegues_por_sujeto": [
+    {
+      "pliegue": 1,
+      "sujetos_prueba": 8,
+      "caidas_prueba": 375,
+      "exactitud": 0.9883720930232558,
+      "f1_macro": 0.9879097144038917,
+      "sensibilidad": 1.0,
+      "especificidad": 0.9807355516637478
+    },
+    {
+      "pliegue": 2,
+      "sujetos_prueba": 8,
+      "caidas_prueba": 373,
+      "exactitud": 0.9904559915164369,
+      "f1_macro": 0.9900158226917398,
+      "sensibilidad": 0.9865951742627346,
+      "especificidad": 0.9929824561403509
+    },
+    {
+      "pliegue": 3,
+      "sujetos_prueba": 8,
+      "caidas_prueba": 375,
+      "exactitud": 0.9766454352441614,
+      "f1_macro": 0.9754484065868974,
+      "sensibilidad": 0.9493333333333334,
+      "especificidad": 0.9947089947089947
+    },
+    {
+      "pliegue": 4,
+      "sujetos_prueba": 7,
+      "caidas_prueba": 375,
+      "exactitud": 0.984036488027366,
+      "f1_macro": 0.9836129025369437,
+      "sensibilidad": 0.9626666666666667,
+      "especificidad": 1.0
+    },
+    {
+      "pliegue": 5,
+      "sujetos_prueba": 7,
+      "caidas_prueba": 300,
+      "exactitud": 0.9836888331242158,
+      "f1_macro": 0.9827277804172605,
+      "sensibilidad": 0.9933333333333333,
+      "especificidad": 0.9778672032193159
+    }
+  ],
+  "cv_resumen": {
+    "exactitud": [
+      0.9846397681870871,
+      0.005313574271307723
+    ],
+    "f1_macro": [
+      0.9839429253273465,
+      0.005620450133280897
+    ],
+    "sensibilidad": [
+      0.9783857015192137,
+      0.021500774359875702
+    ],
+    "especificidad": [
+      0.9892588411464818,
+      0.00950470744242267
+    ]
+  }
+}
